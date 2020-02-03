@@ -1,21 +1,15 @@
-
 extern crate hex;
 
-use std::ffi::{CString, CStr};
-use std::os::raw::c_char;
-
-pub const true_: u32 = 1;
-pub const false_: u32 = 0;
-pub const __bool_true_false_are_defined: u32 = 1;
 extern "C" {
+    #[allow(dead_code)]
     fn convert_to_base62(
         base62: *mut ::std::os::raw::c_char,
         id: *mut ::std::os::raw::c_char,
     ) -> *mut ::std::os::raw::c_char;
 }
+
 extern "C" {
-    #[doc = " @param base62 22 base62 character data. It doesn't have to be NUL-terminated,"]
-    #[doc = "        but reading will stop if a NUL is found prematurely."]
+    #[allow(dead_code)]
     fn convert_from_base62(
         id: *mut ::std::os::raw::c_char,
         base62: *const ::std::os::raw::c_char,
@@ -44,34 +38,19 @@ fn base62_val(value_char: char) -> Option<u8> {
     }
 }
 
-fn main() {
-
-    let mut base62 = vec![0i8;23];
-    let mut id = hex::decode("ffffffffffffffffffffffffffffffff").unwrap();
-    unsafe {
-        let b62 = convert_to_base62(base62.as_mut_ptr(), id.as_mut_ptr() as *mut c_char);
-        println!("{}", CStr::from_ptr(b62).to_string_lossy());
-    }
-
-    let i = get_integer("7MWcKsjukco48au9ic33u8").unwrap();
-    println!("{:016x}", i);
-}
-
-
 #[cfg(test)]
 mod tests {
-    use std::ffi::{CString, CStr};
+    use std::ffi::CStr;
     use std::os::raw::c_char;
     use super::*;
 
-    struct Base62TestData (&'static str, &'static str);
-
+    struct Base62TestData(&'static str, &'static str);
 
     #[test]
     fn rust_get_integer_works() {
         for test in TEST_DATA {
             let i = get_integer(test.0).expect("get_integer can parse test data");
-            let hex = format!{"{:032x}", i};
+            let hex = format! {"{:032x}", i};
             assert_eq!(hex, test.1,
                        "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex
             );
@@ -81,7 +60,7 @@ mod tests {
     #[test]
     fn cpp_convert_to_base62_works_for_all() {
         for test in TEST_DATA {
-            let mut base62 = vec![0i8;23];
+            let mut base62 = vec![0i8; 23];
             let mut id = hex::decode(test.1).unwrap();
             unsafe {
                 let b62 = convert_to_base62(base62.as_mut_ptr(), id.as_mut_ptr() as *mut c_char);
@@ -91,7 +70,7 @@ mod tests {
         }
     }
 
-    const TEST_DATA:  &'static [Base62TestData] = &[
+    const TEST_DATA: &'static [Base62TestData] = &[
         Base62TestData("0000000000000000000001", "00000000000000000000000000000001"),
         Base62TestData("0000000000000000000002", "00000000000000000000000000000002"),
         Base62TestData("0000000000000000000004", "00000000000000000000000000000004"),
