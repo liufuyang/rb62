@@ -1,14 +1,11 @@
 // Copyright (c) Spotify AB
 
+// clang base62_conversion.cpp -c -std=c++11
+
 #include "base62_conversion.h"
 
-namespace spotify::tl::detail {
+extern "C" {
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#endif  // __GNUC__
 char *convert_to_base62(char base62[23], uint8_t id[16]) {
   static const char kBaseChars[62 + 1] =
       "0123456789"
@@ -93,10 +90,10 @@ char *convert_to_base62(char base62[23], uint8_t id[16]) {
  *               NUL-terminated, but reading will stop if a NUL is found
  *               prematurely.
  */
-inline bool get_base62_values(uint8_t values[22], const char *base62) {
+inline bool get_base62_values(char values[22], const char *base62) {
   for (int it = 0; it < 22; ++it) {
     char value_char = base62[it];
-    uint8_t &value = values[it];
+    char &value = values[it];
     if ('0' <= value_char && value_char <= '9') {
       value = value_char - '0';
     } else if ('a' <= value_char && value_char <= 'z') {
@@ -113,8 +110,8 @@ inline bool get_base62_values(uint8_t values[22], const char *base62) {
 #pragma GCC diagnostic pop
 #endif  // __GNUC__
 
-inline bool base62_number_fits_in_id(const uint8_t values[22]) {
-  static uint8_t max_values[22];
+inline bool base62_number_fits_in_id(const char values[22]) {
+  static char max_values[22];
   if (max_values[0] == 0) {
     const char *kMaxBase62 = "7N42dgm5tFLK9N8MT7fHC7";  // All 128 bits set
     get_base62_values(max_values, kMaxBase62);
@@ -133,7 +130,7 @@ inline bool base62_number_fits_in_id(const uint8_t values[22]) {
  * @param base62 22 base62 character data. It doesn't have to be NUL-terminated,
  *        but reading will stop if a NUL is found prematurely.
  */
-bool convert_from_base62(std::array<uint8_t, 16> &id, const char *base62) {
+bool convert_from_base62(uint8_t id[16], const char *base62) {
   /**
    * This function might look daunting, but don't despair, at a higher level it's actually
    * quite simple.
@@ -196,7 +193,7 @@ bool convert_from_base62(std::array<uint8_t, 16> &id, const char *base62) {
    * By expanding the "simple" code above, while removing all unnecessary calculations we end up
    * with this code.
    */
-  uint8_t values[22];  // Contains values for each of the "digit" in base62 string
+  char values[22];  // Contains values for each of the "digit" in base62 string
 
   // We do string to value conversions and overflow validations first.
   // This way we can chew away in a fast and branch-less fashion later.
@@ -346,4 +343,4 @@ bool convert_from_base62(std::array<uint8_t, 16> &id, const char *base62) {
   return true;
 }
 
-}  // namespace spotify::tl::detail
+}

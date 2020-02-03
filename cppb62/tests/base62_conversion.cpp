@@ -133,7 +133,7 @@ inline bool base62_number_fits_in_id(const uint8_t values[22]) {
  * @param base62 22 base62 character data. It doesn't have to be NUL-terminated,
  *        but reading will stop if a NUL is found prematurely.
  */
-bool convert_from_base62(std::array<uint8_t, 16> &id, const char *base62) {
+bool convert_from_base62(uint8_t id[16], const char *base62) {
   /**
    * This function might look daunting, but don't despair, at a higher level it's actually
    * quite simple.

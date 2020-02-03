@@ -1,10 +1,13 @@
 // Copyright (c) Spotify AB
 
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MAIN  // in only one cpp file
+
 #include <cstdio>
 #include <cstring>
 #include <boost/range/size.hpp>
 #include <boost/test/unit_test.hpp>
-#include <spotify/tl/gid.h>
+#include "gid.h"
 #include "base62_conversion_test_data.h"
 
 namespace spotify::tl::detail {
@@ -31,7 +34,7 @@ BOOST_AUTO_TEST_CASE(ConvertToBase62UsingTestData) {
     char base62_rep[kBase62MaxLength + 1];
     memset(base62_rep, 0, sizeof(base62_rep));
 
-    convert_to_base62(base62_rep, test_data_binary_id);
+    convert_to_base62(base62_rep, test_data_binary_id.data());
     BOOST_CHECK(base62_rep[kBase62MaxLength] == '\0');
     BOOST_CHECK(strlen(base62_rep) == kBase62MaxLength);
     BOOST_CHECK_MESSAGE(strcmp(base62_rep, test_data.base62_rep) == 0,
@@ -52,7 +55,7 @@ BOOST_AUTO_TEST_CASE(ConvertFromBase62UsingTestData) {
     // Verify that ConvertFromBase62 works
     gid<16> binary_id;
     binary_id.fill(0);
-    convert_from_base62(binary_id, test_data.base62_rep);
+    convert_from_base62(binary_id.data(), test_data.base62_rep);
     BOOST_CHECK_MESSAGE(binary_id == test_data_binary_id,
                         "'" << binary_id.to_hex().c_str() << "' != '"
                             << test_data_binary_id.to_hex().c_str() << "'");
@@ -73,7 +76,7 @@ BOOST_AUTO_TEST_CASE(ConvertFromBase62WithInvalidData) {
 
     // Verify that ConvertFromBase62 fails on the invalid
     gid<16> binary_id;
-    BOOST_CHECK_MESSAGE(!convert_from_base62(binary_id, invalid_base62_rep),
+    BOOST_CHECK_MESSAGE(!convert_from_base62(binary_id.data(), invalid_base62_rep),
                         "Converting base62 string \"" << invalid_base62_rep << "\" should fail");
   }
 }
