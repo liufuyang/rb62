@@ -1,4 +1,4 @@
-extern crate hex;
+const BASE_CHARS: &'static [u8] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".as_bytes();
 
 extern "C" {
     #[allow(dead_code)]
@@ -29,11 +29,26 @@ pub fn get_integer(base62: &str) -> Option<u128> {
     Some(bi)
 }
 
+pub fn get_b62(hex: &str) -> Option<String> {
+    let mut b62 = [48u8; 22];
+    let mut hex_as_u128 = u128::from_str_radix(hex, 16).ok()?;
+    let mut index = 22; // start with the last digit of 22 char b62
+    while hex_as_u128 > 0 {
+        let remainder = hex_as_u128 % 62;
+        hex_as_u128 -= remainder;
+        hex_as_u128 /= 62;
+        b62[index - 1] = BASE_CHARS[remainder as usize];
+        index -= 1;
+    }
+    std::str::from_utf8(&b62).ok().map(|str| str.to_owned())
+}
+
+// Returns 0-61
 fn base62_val(value_char: char) -> Option<u8> {
     match value_char {
         '0'..='9' => Some(value_char as u8 - b'0'),
-        'a'..='z' => Some(value_char as u8 - b'a' + (b'9' - b'0' + 1)),
-        'A'..='Z' => Some(value_char as u8 - b'A' + (b'9' - b'0' + 1) + (b'z' - b'a' + 1)),
+        'a'..='z' => Some(value_char as u8 - b'a' + 10),
+        'A'..='Z' => Some(value_char as u8 - b'A' + 36),
         _ => None,
     }
 }
@@ -53,6 +68,16 @@ mod tests {
             let hex = format! {"{:032x}", i};
             assert_eq!(hex, test.1,
                        "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex
+            );
+        }
+    }
+
+    #[test]
+    fn rust_get_b62_works() {
+        for test in TEST_DATA {
+            let b62 = get_b62(test.1).expect("get_b62 can parse test data");
+            assert_eq!(b62, test.0,
+                       "we are testing hex {} to b62 {}, but got b62 {}", test.1, test.0, b62
             );
         }
     }
