@@ -1,81 +1,117 @@
-// const BASE_CHARS: &'static [u8] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".as_bytes();
+#![feature(test)]
 
-pub fn get_integer(base62: &str) -> Option<u128> {
-    let mut bi = 0u128;
-    if base62.len() != 22 {
-        return None;
-    }
-    for char in base62.chars() {
-        let v = base62_val(char)?;
-        bi *= 62;
-        bi += v as u128;
-    }
-    Some(bi)
+extern crate test;
+
+extern "C" {
+    #[allow(dead_code)]
+    fn convert_to_base62(
+        base62: *mut ::std::os::raw::c_char,
+        id: *mut ::std::os::raw::c_char,
+    ) -> *mut ::std::os::raw::c_char;
 }
 
-pub fn get_b62(hex: &str) -> Option<String> {
-    let mut b62 = [48u8; 22];
-    let mut hex_as_u128 = u128::from_str_radix(hex, 16).ok()?;
-    let mut index = 22; // start with the last digit of 22 char b62
-    while hex_as_u128 > 0 {
-        let remainder = hex_as_u128 % 62;
-        hex_as_u128 /= 62;
-        b62[index - 1] = base62_char(remainder as usize)?;
-        index -= 1;
-    }
-    std::str::from_utf8(&b62).ok().map(|str| str.to_owned())
-}
-
-// Returns 0-61
-fn base62_val(value_char: char) -> Option<u8> {
-    match value_char {
-        '0'..='9' => Some(value_char as u8 - b'0'),
-        'a'..='z' => Some(value_char as u8 - b'a' + 10),
-        'A'..='Z' => Some(value_char as u8 - b'A' + 36),
-        _ => None,
-    }
-}
-
-// Return a char within "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-fn base62_char(value: usize) -> Option<u8> {
-    // Some(BASE_CHARS[value])
-    match value {
-        0..=9 => Some(b'0' + value as u8),
-        10..=35 => Some(b'a' + value as u8 - 10),
-        36..=61 => Some(b'A' + value as u8 - 36),
-        _ => None,
-    }
+extern "C" {
+    #[allow(dead_code)]
+    fn convert_from_base62(
+        id: *mut ::std::os::raw::c_char,
+        base62: *const ::std::os::raw::c_char,
+    ) -> bool;
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
+    use rb62::{get_b62, get_integer};
+    use std::ffi::{CStr, CString};
+    use std::os::raw::c_char;
 
     struct Base62TestData(&'static str, &'static str);
 
+    #[bench]
+    fn bench_cpp_hex_to_b62(b: &mut Bencher) {
+        b.iter(|| {
+            for test in TEST_DATA {
+                let mut base62 = vec![0i8; 23];
+                let mut id = hex::decode(test.1).unwrap();
+                unsafe {
+                    let b62 = convert_to_base62(base62.as_mut_ptr(), id.as_mut_ptr() as *mut c_char);
+                    let b62 = CStr::from_ptr(b62).to_string_lossy();
+                    assert_eq!(b62, test.0)
+                }
+            }
+        });
+    }
+
+    #[bench]
+    fn bench_cpp_b62_to_hex(b: &mut Bencher) {
+        b.iter(|| {
+            for test in TEST_DATA {
+                let base62 = CString::new(test.0).expect("Create CString from test data.0");
+                let mut id = vec![0u8; 16];
+                unsafe {
+                    let _bool = convert_from_base62(id.as_mut_ptr() as *mut c_char, base62.as_ptr() as *const c_char, );
+                }
+                let hex = hex::encode(id);
+                assert_eq!(hex, test.1)
+            }
+        });
+    }
+
+    #[bench]
+    fn bench_rust_hex_to_b62(b: &mut Bencher) {
+        b.iter(|| {
+            for test in TEST_DATA {
+                let b62 = get_b62(test.1).expect("get_b62 can parse test data");
+                assert_eq!(b62, test.0,
+                           "we are testing hex {} to b62 {}, but got b62 {}", test.1, test.0, b62
+                );
+            }
+        });
+    }
+
+    #[bench]
+    fn bench_rust_b62_to_hex(b: &mut Bencher) {
+        b.iter(|| {
+            for test in TEST_DATA {
+                let i = get_integer(test.0).expect("get_integer can parse test data");
+                let hex = format! {"{:032x}", i};
+                assert_eq!(hex, test.1,
+                           "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex
+                );
+            }
+        });
+    }
+
+
     #[test]
-    fn rust_get_integer_works() {
+    fn cpp_convert_to_base62_works_for_all() {
         for test in TEST_DATA {
-            let i = get_integer(test.0).expect("get_integer can parse test data");
-            let hex = format! {"{:032x}", i};
-            assert_eq!(hex, test.1,
-                       "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex
-            );
+            let mut base62 = vec![0i8; 23];
+            let mut id = hex::decode(test.1).unwrap();
+            unsafe {
+                let b62 = convert_to_base62(base62.as_mut_ptr(), id.as_mut_ptr() as *mut c_char);
+                let b62 = CStr::from_ptr(b62).to_string_lossy();
+                assert_eq!(b62, test.0)
+            }
         }
     }
 
     #[test]
-    fn rust_get_b62_works() {
+    fn cpp_convert_from_base62_works_for_all() {
         for test in TEST_DATA {
-            let b62 = get_b62(test.1).expect("get_b62 can parse test data");
-            assert_eq!(b62, test.0,
-                       "we are testing hex {} to b62 {}, but got b62 {}", test.1, test.0, b62
-            );
+            let base62 = CString::new(test.0).expect("Create CString from test data.0");
+            let mut id = vec![0u8; 16];
+            unsafe {
+                let _bool = convert_from_base62(id.as_mut_ptr() as *mut c_char, base62.as_ptr() as *const c_char, );
+            }
+            let hex = hex::encode(id);
+            assert_eq!(hex, test.1)
         }
     }
 
     const TEST_DATA: &'static [Base62TestData] = &[
-        Base62TestData("0000000000000000000001", "00000000000000000000000000000001"),
+        // Base62TestData("0000000000000000000001", "00000000000000000000000000000001"),
         Base62TestData("0000000000000000000002", "00000000000000000000000000000002"),
         Base62TestData("0000000000000000000004", "00000000000000000000000000000004"),
         Base62TestData("0000000000000000000008", "00000000000000000000000000000008"),
