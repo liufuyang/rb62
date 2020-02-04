@@ -22,7 +22,7 @@ extern "C" {
 mod tests {
     use super::*;
     use test::Bencher;
-    use rb62::{get_b62, get_integer};
+    use rb62::RB62;
     use std::ffi::{CStr, CString};
     use std::os::raw::c_char;
 
@@ -60,9 +60,10 @@ mod tests {
 
     #[bench]
     fn bench_rust_hex_to_b62(b: &mut Bencher) {
+        let mut rb62 = RB62::new();
         b.iter(|| {
             for test in TEST_DATA {
-                let b62 = get_b62(test.1).expect("get_b62 can parse test data");
+                let b62 = rb62.get_b62(test.1).expect("get_b62 can parse test data");
                 assert_eq!(b62, test.0,
                            "we are testing hex {} to b62 {}, but got b62 {}", test.1, test.0, b62
                 );
@@ -72,9 +73,10 @@ mod tests {
 
     #[bench]
     fn bench_rust_b62_to_hex(b: &mut Bencher) {
+        let mut rb62 = RB62::new();
         b.iter(|| {
             for test in TEST_DATA {
-                let i = get_integer(test.0).expect("get_integer can parse test data");
+                let i = rb62.get_integer(test.0).expect("get_integer can parse test data");
                 let hex = format! {"{:032x}", i};
                 assert_eq!(hex, test.1,
                            "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex

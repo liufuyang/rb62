@@ -107,7 +107,7 @@ inline bool get_base62_values(char values[22], const char *base62) {
   return true;
 }
 #ifdef __GNUC__
-#pragma GCC diagnostic pop
+// #pragma GCC diagnostic pop
 #endif  // __GNUC__
 
 inline bool base62_number_fits_in_id(const char values[22]) {

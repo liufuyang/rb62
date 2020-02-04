@@ -1,6 +1,6 @@
 // Copyright (c) Spotify AB
 
-#pragma once
+// #pragma once
 
 #include <cstdint>
 

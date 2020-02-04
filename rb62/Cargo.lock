@@ -18,4 +18,11 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "hex",
+ "specialized-div-rem",
 ]
+
+[[package]]
+name = "specialized-div-rem"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69f6b792b71ebe4c6bccb9acd34f098d96e2a48f70437eeb2c5d3736551e566b"

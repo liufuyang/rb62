@@ -1,63 +1,89 @@
-pub fn get_integer(base62: &str) -> Option<u128> {
-    let mut bi = 0u128;
-    if base62.len() != 22 {
-        return None;
-    }
 
-    let values = base62.chars().map(|c| base62_val(c)).collect::<Option<Vec<_>>>()?;
+use specialized_div_rem::u128_div_rem_delegate; // for fast u128 dividing
 
-    // All 128 bits set
-    let max_values = "7N42dgm5tFLK9N8MT7fHC7".chars()
-        .map(|c| base62_val(c))
-        .collect::<Option<Vec<_>>>().unwrap();
-
-    for (val, max_val) in values.iter().zip(max_values.iter()) {
-        if val > max_val {
-            return None;
-        } else if val < max_val {
-            break;
-        } // and if they are equal, continue loop to compare next val
-    }
-
-    for v in values {
-        bi *= 62;
-        bi += v as u128;
-    }
-    Some(bi)
+pub struct RB62 {
+    b62_val_array: [u8; 22],
+    max_val_array: [u8; 22], // to init with max possible b62 values in u8
 }
 
-pub fn get_b62(hex: &str) -> Option<String> {
-    let mut b62 = [48u8; 22];
-    let mut hex_as_u128 = u128::from_str_radix(hex, 16).ok()?;
-    let mut index = 22; // start with the last digit of 22 char b62
-    while hex_as_u128 > 0 {
-        let remainder = hex_as_u128 % 62;
-        hex_as_u128 /= 62;
-        b62[index - 1] = base62_char(remainder as usize)?;
-        index -= 1;
+impl RB62 {
+    pub fn new() -> RB62 {
+        let mut max_val_array = [0u8; 22];
+        let max_chars = "7N42dgm5tFLK9N8MT7fHC7".as_bytes(); // // This will set all bits of a u128 as 1
+        for i in 0..22 {
+            max_val_array[i] = base62_val(&max_chars[i]).unwrap();
+        }
+
+        RB62 {
+            b62_val_array: [0u8; 22],
+            max_val_array,
+        }
     }
-    std::str::from_utf8(&b62).ok().map(|str| str.to_owned())
+
+    pub fn get_integer(&mut self, base62: &str) -> Option<u128> {
+        let mut bi = 0u128;
+
+        let base62 = base62.as_bytes();
+        if base62.len() != 22 {
+            return None;
+        }
+
+        for i in 0..22 {
+            self.b62_val_array[i] = base62_val(&base62[i])?;
+        }
+
+        for (val, max_val) in self.b62_val_array.iter().zip(self.max_val_array.iter()) {
+            if val > max_val {
+                return None;
+            } else if val < max_val {
+                break;
+            } // and if they are equal, continue loop to compare next val
+        }
+
+        for v in &self.b62_val_array {
+            bi *= 62;
+            bi += *v as u128;
+        }
+        Some(bi)
+    }
+
+    pub fn get_b62(&mut self, hex: &str) -> Option<String> {
+        for i in 0..22 {
+            self.b62_val_array[i] = 48u8;
+        }
+        let mut hex_as_u128 = u128::from_str_radix(hex, 16).ok()?;
+        let mut index = 22; // start with the last digit of 22 char b62
+        while hex_as_u128 > 0 {
+            let (result, remainder) = u128_div_rem_delegate(hex_as_u128, 62);
+            hex_as_u128 = result;
+            self.b62_val_array[index - 1] = base62_char(remainder as u8)?;
+            index -= 1;
+        }
+        // I have tested the line below, removing it won't speed up the function call
+        std::str::from_utf8(&self.b62_val_array).ok().map(|str| str.to_owned())
+    }
 }
 
 // Returns 0-61
-fn base62_val(value_char: char) -> Option<u8> {
+fn base62_val(value_char: &u8) -> Option<u8> {
     match value_char {
-        '0'..='9' => Some(value_char as u8 - b'0'),
-        'a'..='z' => Some(value_char as u8 - b'a' + 10),
-        'A'..='Z' => Some(value_char as u8 - b'A' + 36),
+        b'0'..=b'9' => Some(*value_char as u8 - b'0'),
+        b'a'..=b'z' => Some(*value_char as u8 - b'a' + 10),
+        b'A'..=b'Z' => Some(*value_char as u8 - b'A' + 36),
         _ => None,
     }
 }
 
 // Return a char within "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-fn base62_char(value: usize) -> Option<u8> {
+fn base62_char(value: u8) -> Option<u8> {
     match value {
-        0..=9 => Some(b'0' + value as u8),
-        10..=35 => Some(b'a' + value as u8 - 10),
-        36..=61 => Some(b'A' + value as u8 - 36),
+        0..=9 => Some(b'0' + value),
+        10..=35 => Some(b'a' + value - 10),
+        36..=61 => Some(b'A' + value - 36),
         _ => None,
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -67,8 +93,9 @@ mod tests {
 
     #[test]
     fn rust_get_integer_works() {
+        let mut rb62 = RB62::new();
         for test in TEST_DATA {
-            let i = get_integer(test.0).expect("get_integer can parse test data");
+            let i = rb62.get_integer(test.0).expect("get_integer can parse test data");
             let hex = format! {"{:032x}", i};
             assert_eq!(hex, test.1,
                        "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex
@@ -78,8 +105,9 @@ mod tests {
 
     #[test]
     fn rust_get_b62_works() {
+        let mut rb62 = RB62::new();
         for test in TEST_DATA {
-            let b62 = get_b62(test.1).expect("get_b62 can parse test data");
+            let b62 = rb62.get_b62(test.1).expect("get_b62 can parse test data");
             assert_eq!(b62, test.0,
                        "we are testing hex {} to b62 {}, but got b62 {}", test.1, test.0, b62
             );
@@ -88,6 +116,7 @@ mod tests {
 
     #[test]
     fn rust_get_integer_should_return_none_when_input_invalid() {
+        let mut rb62 = RB62::new();
         let invalid_inputs = vec![
             "000000000000000000000+",  // Invalid characters (+)
             "000000000000000000001",   // String is too short (should be at least 22 characters long)
@@ -96,13 +125,14 @@ mod tests {
         ];
 
         for invalid in invalid_inputs {
-            let i = get_integer(invalid);
+            let i = rb62.get_integer(invalid);
             assert_eq!(i, None);
         }
     }
 
     #[test]
     fn rust_get_b62_should_return_none_when_input_invalid() {
+        let mut rb62 = RB62::new();
         let invalid_inputs = vec![
             "0000000000000000000000000000000+",
             "g0000000000000000000000000000001",
@@ -110,7 +140,7 @@ mod tests {
         ];
 
         for invalid in invalid_inputs {
-            let i = get_b62(invalid);
+            let i = rb62.get_b62(invalid);
             assert_eq!(i, None);
         }
     }
