@@ -32,6 +32,7 @@ impl RB62 {
             self.b62_val_array[i] = base62_val(&base62[i])?;
         }
 
+        // check input value size is no bigger than max value - "7N42dgm5tFLK9N8MT7fHC7"
         for (val, max_val) in self.b62_val_array.iter().zip(self.max_val_array.iter()) {
             if val > max_val {
                 return None;
