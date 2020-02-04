@@ -110,6 +110,26 @@ mod tests {
         }
     }
 
+    #[test]
+    fn cpp_convert_from_base62_should_return_false_when_input_invalid() {
+        let invalid_inputs = vec![
+            "000000000000000000000+",  // Invalid characters (+)
+            "000000000000000000001",   // String is too short (should be at least 22 characters long)
+            "7N42dgm5tFLK9N8MT7fHC8",  // Too large (max is 7N42dgm5tFLK9N8MT7fHC7)
+            "ZZZZZZZZZZZZZZZZZZZZZZ",  // Definately too large to fit in 128 bits
+        ];
+
+        for invalid in invalid_inputs {
+            let base62 = CString::new(invalid).expect("Create CString from test data");
+            let mut id = vec![0u8; 16];
+
+            unsafe {
+                let bool = convert_from_base62(id.as_mut_ptr() as *mut c_char, base62.as_ptr() as *const c_char, );
+                assert_eq!(bool, false);
+            }
+        }
+    }
+
     const TEST_DATA: &'static [Base62TestData] = &[
         // Base62TestData("0000000000000000000001", "00000000000000000000000000000001"),
         Base62TestData("0000000000000000000002", "00000000000000000000000000000002"),

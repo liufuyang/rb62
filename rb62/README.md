@@ -1,7 +1,7 @@
 ## Benchmark
 ```
-test tests::bench_cpp_b62_to_hex  ... bench:     384,928 ns/iter (+/- 101,293)
-test tests::bench_cpp_hex_to_b62  ... bench:     472,374 ns/iter (+/- 94,929)
-test tests::bench_rust_b62_to_hex ... bench:     206,766 ns/iter (+/- 46,375)
-test tests::bench_rust_hex_to_b62 ... bench:   1,239,872 ns/iter (+/- 161,767)
+test tests::bench_cpp_b62_to_hex  ... bench:     282,134 ns/iter (+/- 22,600)
+test tests::bench_cpp_hex_to_b62  ... bench:     306,185 ns/iter (+/- 73,065)
+test tests::bench_rust_b62_to_hex ... bench:     626,555 ns/iter (+/- 107,552)
+test tests::bench_rust_hex_to_b62 ... bench:   1,186,583 ns/iter (+/- 90,073)
 ```

@@ -5,8 +5,23 @@ pub fn get_integer(base62: &str) -> Option<u128> {
     if base62.len() != 22 {
         return None;
     }
-    for char in base62.chars() {
-        let v = base62_val(char)?;
+
+    let values = base62.chars().map(|c| base62_val(c)).collect::<Option<Vec<_>>>()?;
+
+    // All 128 bits set
+    let max_values = "7N42dgm5tFLK9N8MT7fHC7".chars()
+        .map(|c| base62_val(c))
+        .collect::<Option<Vec<_>>>().unwrap();
+
+    for (val, max_val) in values.iter().zip(max_values.iter()) {
+        if val > max_val {
+            return None;
+        } else if val < max_val {
+            break;
+        } // and if they are equal, continue loop to compare next val
+    }
+
+    for v in values {
         bi *= 62;
         bi += v as u128;
     }
@@ -73,6 +88,22 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn rust_get_integer_should_return_none_when_input_invalid() {
+        let invalid_inputs = vec![
+            "000000000000000000000+",  // Invalid characters (+)
+            "000000000000000000001",   // String is too short (should be at least 22 characters long)
+            "7N42dgm5tFLK9N8MT7fHC8",  // Too large (max is 7N42dgm5tFLK9N8MT7fHC7)
+            "ZZZZZZZZZZZZZZZZZZZZZZ",  // Definately too large to fit in 128 bits
+        ];
+
+        for invalid in invalid_inputs {
+            let i = get_integer(invalid);
+            assert_eq!(i, None);
+        }
+    }
+
 
     const TEST_DATA: &'static [Base62TestData] = &[
         Base62TestData("0000000000000000000001", "00000000000000000000000000000001"),
