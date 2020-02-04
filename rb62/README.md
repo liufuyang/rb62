@@ -1,4 +1,6 @@
 ## Benchmark
+
+`cargo bench --tests`
 ```
 test tests::bench_cpp_b62_to_hex  ... bench:     282,134 ns/iter (+/- 22,600)
 test tests::bench_cpp_hex_to_b62  ... bench:     306,185 ns/iter (+/- 73,065)
