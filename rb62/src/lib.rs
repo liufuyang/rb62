@@ -1,5 +1,3 @@
-// const BASE_CHARS: &'static [u8] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".as_bytes();
-
 pub fn get_integer(base62: &str) -> Option<u128> {
     let mut bi = 0u128;
     if base62.len() != 22 {
@@ -53,7 +51,6 @@ fn base62_val(value_char: char) -> Option<u8> {
 
 // Return a char within "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 fn base62_char(value: usize) -> Option<u8> {
-    // Some(BASE_CHARS[value])
     match value {
         0..=9 => Some(b'0' + value as u8),
         10..=35 => Some(b'a' + value as u8 - 10),
@@ -100,6 +97,20 @@ mod tests {
 
         for invalid in invalid_inputs {
             let i = get_integer(invalid);
+            assert_eq!(i, None);
+        }
+    }
+
+    #[test]
+    fn rust_get_b62_should_return_none_when_input_invalid() {
+        let invalid_inputs = vec![
+            "0000000000000000000000000000000+",
+            "g0000000000000000000000000000001",
+            "ffffffffffffffffffffffffffffffff1",
+        ];
+
+        for invalid in invalid_inputs {
+            let i = get_b62(invalid);
             assert_eq!(i, None);
         }
     }

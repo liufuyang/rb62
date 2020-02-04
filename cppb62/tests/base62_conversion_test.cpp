@@ -64,11 +64,10 @@ BOOST_AUTO_TEST_CASE(ConvertFromBase62UsingTestData) {
 
 BOOST_AUTO_TEST_CASE(ConvertFromBase62WithInvalidData) {
   const char *invalid_base62_reps[] = {
-      //"000000000000000000000+",  // Invalid characters (+)
-      //"000000000000000000001",   // String is too short (should be at least 22 characters long)
-      //"7N42dgm5tFLK9N8MT7fHC8",  // Too large (max is 7N42dgm5tFLK9N8MT7fHC7)
-      //"ZZZZZZZZZZZZZZZZZZZZZZ",  // Definately too large to fit in 128 bits
-      "6N62dgm5tFLK9N8MT7fHC8",
+      "000000000000000000000+",  // Invalid characters (+)
+      "000000000000000000001",   // String is too short (should be at least 22 characters long)
+      "7N42dgm5tFLK9N8MT7fHC8",  // Too large (max is 7N42dgm5tFLK9N8MT7fHC7)
+      "ZZZZZZZZZZZZZZZZZZZZZZ",  // Definately too large to fit in 128 bits
   };
 
   const size_t num_reps = boost::size(invalid_base62_reps);
