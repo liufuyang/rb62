@@ -1,11 +1,18 @@
 ## Usage
 
+Firstly clone this repo
+```
+git clone git@ghe.spotify.net:fuyangl/rb62.git
+```
+
+Then add this to your Cargo.toml
 ```
 # Cargo.toml
 [dependencies]
-rb62 = { git = https://ghe.spotify.net/fuyangl/rb62 }
+rb62 = { path = '../rb62' }
 ```
 
+Then you can using it like this
 ```rust
 extern crate rb62;
 
