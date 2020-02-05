@@ -45,7 +45,7 @@ Input hex dbc3d5ebe344484da3e2448712a02213, output b62 6GGODyP2LIdbxIfYxy5UbN
 
 ## Benchmark
 
-`cargo bench --tests`
+`cargo bench --tests --features bench_cpp`
 ```
 test bench_cpp_b62_to_hex                   ... bench:     296,346 ns/iter (+/- 34,520)
 test bench_cpp_hex_to_b62                   ... bench:     310,960 ns/iter (+/- 22,825)

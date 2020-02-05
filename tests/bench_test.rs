@@ -2,6 +2,7 @@
 
 extern crate test;
 
+#[cfg(feature = "bench_cpp")]
 extern "C" {
     #[allow(dead_code)]
     fn convert_to_base62(
@@ -10,6 +11,7 @@ extern "C" {
     ) -> *mut ::std::os::raw::c_char;
 }
 
+#[cfg(feature = "bench_cpp")]
 extern "C" {
     #[allow(dead_code)]
     fn convert_from_base62(
@@ -20,12 +22,16 @@ extern "C" {
 
 use test::Bencher;
 use rb62::{get_integer, get_b62};
+
+#[cfg(feature = "bench_cpp")]
 use std::ffi::{CStr, CString};
+#[cfg(feature = "bench_cpp")]
 use std::os::raw::c_char;
 use std::str;
 
 struct Base62TestData(&'static str, &'static str);
 
+#[cfg(feature = "bench_cpp")]
 #[bench]
 fn bench_cpp_hex_to_b62(b: &mut Bencher) {
     b.iter(|| {
@@ -41,6 +47,7 @@ fn bench_cpp_hex_to_b62(b: &mut Bencher) {
     });
 }
 
+#[cfg(feature = "bench_cpp")]
 #[bench]
 fn bench_cpp_b62_to_hex(b: &mut Bencher) {
     b.iter(|| {
@@ -82,6 +89,7 @@ fn bench_rust_b62_to_hex(b: &mut Bencher) {
     });
 }
 
+#[cfg(feature = "bench_cpp")]
 #[bench]
 fn bench_single_operation_cpp_hex_to_b62(b: &mut Bencher) {
     b.iter(|| {
@@ -95,6 +103,7 @@ fn bench_single_operation_cpp_hex_to_b62(b: &mut Bencher) {
     });
 }
 
+#[cfg(feature = "bench_cpp")]
 #[bench]
 fn bench_single_operation_cpp_b62_to_hex(b: &mut Bencher) {
     b.iter(|| {
@@ -130,6 +139,7 @@ fn bench_single_operation_rust_b62_to_hex(b: &mut Bencher) {
     });
 }
 
+#[cfg(feature = "bench_cpp")]
 #[test]
 fn cpp_convert_to_base62_works_for_all() {
     for test in TEST_DATA {
@@ -143,6 +153,7 @@ fn cpp_convert_to_base62_works_for_all() {
     }
 }
 
+#[cfg(feature = "bench_cpp")]
 #[test]
 fn cpp_convert_from_base62_works_for_all() {
     for test in TEST_DATA {
@@ -156,6 +167,7 @@ fn cpp_convert_from_base62_works_for_all() {
     }
 }
 
+#[cfg(feature = "bench_cpp")]
 #[test]
 fn cpp_convert_from_base62_should_return_false_when_input_invalid() {
     let invalid_inputs = vec![
