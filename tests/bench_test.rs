@@ -82,6 +82,53 @@ fn bench_rust_b62_to_hex(b: &mut Bencher) {
     });
 }
 
+#[bench]
+fn bench_single_operation_cpp_hex_to_b62(b: &mut Bencher) {
+    b.iter(|| {
+        let mut base62 = vec![0i8; 23];
+        let mut id = hex::decode("dbc3d5ebe344484da3e2448712a02213").unwrap();
+        unsafe {
+            let b62 = convert_to_base62(base62.as_mut_ptr(), id.as_mut_ptr() as *mut c_char);
+            let b62 = CStr::from_ptr(b62).to_string_lossy();
+            assert_eq!(b62, "6GGODyP2LIdbxIfYxy5UbN")
+        }
+    });
+}
+
+#[bench]
+fn bench_single_operation_cpp_b62_to_hex(b: &mut Bencher) {
+    b.iter(|| {
+        let base62 = CString::new("6GGODyP2LIdbxIfYxy5UbN").expect("Create CString from test data.0");
+        let mut id = vec![0u8; 16];
+        unsafe {
+            let _bool = convert_from_base62(id.as_mut_ptr() as *mut c_char, base62.as_ptr() as *const c_char);
+        }
+        let hex = hex::encode(id);
+        assert_eq!(hex, "dbc3d5ebe344484da3e2448712a02213")
+    });
+}
+
+#[bench]
+fn bench_single_operation_rust_hex_to_b62(b: &mut Bencher) {
+    b.iter(|| {
+        let b62 = get_b62("dbc3d5ebe344484da3e2448712a02213").expect("get_b62 can parse test data");
+        let b62 = str::from_utf8(&b62).unwrap();
+        assert_eq!(b62, "6GGODyP2LIdbxIfYxy5UbN",
+                   "we are testing hex {} to b62 {}, but got b62 {}", "dbc3d5ebe344484da3e2448712a02213", "6GGODyP2LIdbxIfYxy5UbN", b62
+        );
+    });
+}
+
+#[bench]
+fn bench_single_operation_rust_b62_to_hex(b: &mut Bencher) {
+    b.iter(|| {
+        let i = get_integer("6GGODyP2LIdbxIfYxy5UbN").expect("get_integer can parse test data");
+        let hex = format! {"{:032x}", i};
+        assert_eq!(hex, "dbc3d5ebe344484da3e2448712a02213",
+                   "we are testing b62 {} to hex {}, but got hex {}", "6GGODyP2LIdbxIfYxy5UbN", "dbc3d5ebe344484da3e2448712a02213", hex
+        );
+    });
+}
 
 #[test]
 fn cpp_convert_to_base62_works_for_all() {

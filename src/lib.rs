@@ -13,7 +13,6 @@ lazy_static! {
     };
 }
 
-
 pub fn get_integer(base62: &str) -> Option<u128> {
     let mut b62_val_array: [u8; 22] = [0u8; 22];
     let mut bi = 0u128;
@@ -22,7 +21,6 @@ pub fn get_integer(base62: &str) -> Option<u128> {
     if base62.len() != 22 {
         return None;
     }
-
 
     for i in 0..22 {
         b62_val_array[i] = base62_val(&base62[i])?;
@@ -50,6 +48,7 @@ pub fn get_b62(hex: &str) -> Option<[u8; 22]> {
     for i in 0..22 {
         b62_val_array[i] = 48u8;
     }
+
     let mut hex_as_u128 = u128::from_str_radix(hex, 16).ok()?;
     let mut index = 22; // start with the last digit of 22 char b62
     while hex_as_u128 > 0 {
@@ -63,7 +62,6 @@ pub fn get_b62(hex: &str) -> Option<[u8; 22]> {
     }
     Some(b62_val_array.clone())
 }
-
 
 // Returns 0-61
 fn base62_val(value_char: &u8) -> Option<u8> {
@@ -84,7 +82,6 @@ fn base62_char(value: u8) -> Option<u8> {
         _ => None,
     }
 }
-
 
 #[cfg(test)]
 mod tests {
