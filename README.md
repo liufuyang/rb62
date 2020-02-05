@@ -1,9 +1,5 @@
 
-This is a somehow copy and simpler version of the C++ code from client-core
-at https://ghe.spotify.net/spotify-sdk/client-core/blob/master/spotify/libs/tl/cpp/src/base62_conversion.cpp
-
-The code here has been fully tested by migrate all the test cases from 
-https://ghe.spotify.net/spotify-sdk/client-core/tree/master/spotify/libs/tl/cpp/tests/detail
+This is a simple crate to base62 encoding from a hex input.
 
 This crate support `no_std` environment by default.
 
