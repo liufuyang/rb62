@@ -1,136 +1,62 @@
-#![feature(test)]
-
-extern crate test;
-
-extern "C" {
-    #[allow(dead_code)]
-    fn convert_to_base62(
-        base62: *mut ::std::os::raw::c_char,
-        id: *mut ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_char;
-}
-
-extern "C" {
-    #[allow(dead_code)]
-    fn convert_from_base62(
-        id: *mut ::std::os::raw::c_char,
-        base62: *const ::std::os::raw::c_char,
-    ) -> bool;
-}
-
-use test::Bencher;
 use rb62::{get_integer, get_b62};
-use std::ffi::{CStr, CString};
-use std::os::raw::c_char;
 use std::str;
 
 struct Base62TestData(&'static str, &'static str);
 
-#[bench]
-fn bench_cpp_hex_to_b62(b: &mut Bencher) {
-    b.iter(|| {
-        for test in TEST_DATA {
-            let mut base62 = vec![0i8; 23];
-            let mut id = hex::decode(test.1).unwrap();
-            unsafe {
-                let b62 = convert_to_base62(base62.as_mut_ptr(), id.as_mut_ptr() as *mut c_char);
-                let b62 = CStr::from_ptr(b62).to_string_lossy();
-                assert_eq!(b62, test.0)
-            }
-        }
-    });
-}
-
-#[bench]
-fn bench_cpp_b62_to_hex(b: &mut Bencher) {
-    b.iter(|| {
-        for test in TEST_DATA {
-            let base62 = CString::new(test.0).expect("Create CString from test data.0");
-            let mut id = vec![0u8; 16];
-            unsafe {
-                let _bool = convert_from_base62(id.as_mut_ptr() as *mut c_char, base62.as_ptr() as *const c_char);
-            }
-            let hex = hex::encode(id);
-            assert_eq!(hex, test.1)
-        }
-    });
-}
-
-#[bench]
-fn bench_rust_hex_to_b62(b: &mut Bencher) {
-    b.iter(|| {
-        for test in TEST_DATA {
-            let b62 = get_b62(test.1).expect("get_b62 can parse test data");
-            let b62 = str::from_utf8(&b62).unwrap();
-            assert_eq!(b62, test.0,
-                       "we are testing hex {} to b62 {}, but got b62 {}", test.1, test.0, b62
-            );
-        }
-    });
-}
-
-#[bench]
-fn bench_rust_b62_to_hex(b: &mut Bencher) {
-    b.iter(|| {
-        for test in TEST_DATA {
-            let i = get_integer(test.0).expect("get_integer can parse test data");
-            let hex = format! {"{:032x}", i};
-            assert_eq!(hex, test.1,
-                       "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex
-            );
-        }
-    });
-}
-
-
 #[test]
-fn cpp_convert_to_base62_works_for_all() {
+fn rust_get_integer_works() {
     for test in TEST_DATA {
-        let mut base62 = vec![0i8; 23];
-        let mut id = hex::decode(test.1).unwrap();
-        unsafe {
-            let b62 = convert_to_base62(base62.as_mut_ptr(), id.as_mut_ptr() as *mut c_char);
-            let b62 = CStr::from_ptr(b62).to_string_lossy();
-            assert_eq!(b62, test.0)
-        }
+        let i = get_integer(test.0).expect("get_integer can parse test data");
+        let hex = format! {"{:032x}", i};
+        assert_eq!(hex, test.1,
+                   "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex
+        );
     }
 }
 
 #[test]
-fn cpp_convert_from_base62_works_for_all() {
+fn rust_get_b62_works() {
     for test in TEST_DATA {
-        let base62 = CString::new(test.0).expect("Create CString from test data.0");
-        let mut id = vec![0u8; 16];
-        unsafe {
-            let _bool = convert_from_base62(id.as_mut_ptr() as *mut c_char, base62.as_ptr() as *const c_char);
-        }
-        let hex = hex::encode(id);
-        assert_eq!(hex, test.1)
+        let b62 = get_b62(test.1).expect("get_b62 can parse test data");
+        let b62 = str::from_utf8(&b62).unwrap();
+        assert_eq!(b62, test.0,
+                   "we are testing hex {} to b62 {}, but got b62 {}", test.1, test.0, b62
+        );
     }
 }
 
 #[test]
-fn cpp_convert_from_base62_should_return_false_when_input_invalid() {
-    let invalid_inputs = vec![
+fn rust_get_integer_should_return_none_when_input_invalid() {
+    let invalid_inputs = [
         "000000000000000000000+",  // Invalid characters (+)
         "000000000000000000001",   // String is too short (should be at least 22 characters long)
         "7N42dgm5tFLK9N8MT7fHC8",  // Too large (max is 7N42dgm5tFLK9N8MT7fHC7)
         "ZZZZZZZZZZZZZZZZZZZZZZ",  // Definately too large to fit in 128 bits
     ];
 
-    for invalid in invalid_inputs {
-        let base62 = CString::new(invalid).expect("Create CString from test data");
-        let mut id = vec![0u8; 16];
-
-        unsafe {
-            let bool = convert_from_base62(id.as_mut_ptr() as *mut c_char, base62.as_ptr() as *const c_char);
-            assert_eq!(bool, false);
-        }
+    for invalid in &invalid_inputs {
+        let i = get_integer(invalid);
+        assert_eq!(i, None);
     }
 }
 
+#[test]
+fn rust_get_b62_should_return_none_when_input_invalid() {
+    let invalid_inputs = [
+        "0000000000000000000000000000000+",
+        "g0000000000000000000000000000001",
+        "ffffffffffffffffffffffffffffffff1",
+    ];
+
+    for invalid in &invalid_inputs {
+        let i = get_b62(invalid);
+        assert_eq!(i, None);
+    }
+}
+
+
 const TEST_DATA: &'static [Base62TestData] = &[
-    // Base62TestData("0000000000000000000001", "00000000000000000000000000000001"),
+    Base62TestData("0000000000000000000001", "00000000000000000000000000000001"),
     Base62TestData("0000000000000000000002", "00000000000000000000000000000002"),
     Base62TestData("0000000000000000000004", "00000000000000000000000000000004"),
     Base62TestData("0000000000000000000008", "00000000000000000000000000000008"),
