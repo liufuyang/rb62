@@ -5,16 +5,11 @@ This crate support `no_std` environment by default.
 
 ## Usage
 
-Firstly clone this repo
-```
-git clone git@ghe.spotify.net:fuyangl/rb62.git
-```
-
-Then add this to your Cargo.toml
+Add this to your Cargo.toml
 ```
 # Cargo.toml
 [dependencies]
-rb62 = { path = '../rb62' }
+rb62 = { git = 'https://github.com/liufuyang/rb62.git' }
 ```
 
 Then you can using it like this (or clone the repo and do `cargo run --example demo`)
