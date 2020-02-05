@@ -1,26 +1,28 @@
 
 use specialized_div_rem::u128_div_rem_delegate; // for fast u128 dividing
+use std::cell::RefCell; // for interior mutability https://doc.rust-lang.org/book/ch15-05-interior-mutability.html
+use std::ops::Deref;
 
 pub struct RB62 {
-    b62_val_array: [u8; 22],
+    b62_val_array: RefCell<[u8; 22]>,
     max_val_array: [u8; 22], // to init with max possible b62 values in u8
 }
 
 impl RB62 {
     pub fn new() -> RB62 {
         let mut max_val_array = [0u8; 22];
-        let max_chars = "7N42dgm5tFLK9N8MT7fHC7".as_bytes(); // // This will set all bits of a u128 as 1
+        let max_chars = "7N42dgm5tFLK9N8MT7fHC7".as_bytes(); // This will set all bits of a u128 as 1
         for i in 0..22 {
             max_val_array[i] = base62_val(&max_chars[i]).unwrap();
         }
 
         RB62 {
-            b62_val_array: [0u8; 22],
+            b62_val_array: RefCell::new([0u8; 22]),
             max_val_array,
         }
     }
 
-    pub fn get_integer(&mut self, base62: &str) -> Option<u128> {
+    pub fn get_integer(&self, base62: &str) -> Option<u128> {
         let mut bi = 0u128;
 
         let base62 = base62.as_bytes();
@@ -29,11 +31,11 @@ impl RB62 {
         }
 
         for i in 0..22 {
-            self.b62_val_array[i] = base62_val(&base62[i])?;
+            self.b62_val_array.borrow_mut()[i] = base62_val(&base62[i])?;
         }
 
         // check input value size is no bigger than max value - "7N42dgm5tFLK9N8MT7fHC7"
-        for (val, max_val) in self.b62_val_array.iter().zip(self.max_val_array.iter()) {
+        for (val, max_val) in self.b62_val_array.borrow().iter().zip(self.max_val_array.iter()) {
             if val > max_val {
                 return None;
             } else if val < max_val {
@@ -41,27 +43,30 @@ impl RB62 {
             } // and if they are equal, continue loop to compare next val
         }
 
-        for v in &self.b62_val_array {
+        for v in self.b62_val_array.borrow().iter() {
             bi *= 62;
             bi += *v as u128;
         }
         Some(bi)
     }
 
-    pub fn get_b62(&mut self, hex: &str) -> Option<String> {
+    pub fn get_b62(&self, hex: &str) -> Option<String> {
         for i in 0..22 {
-            self.b62_val_array[i] = 48u8;
+            self.b62_val_array.borrow_mut()[i] = 48u8;
         }
         let mut hex_as_u128 = u128::from_str_radix(hex, 16).ok()?;
         let mut index = 22; // start with the last digit of 22 char b62
         while hex_as_u128 > 0 {
+            // faster integer dividing, the code below is the same as:
+            // let result = hex_as_u128 / 62;
+            // let remainder = hex_as_u128 % 62;
             let (result, remainder) = u128_div_rem_delegate(hex_as_u128, 62);
             hex_as_u128 = result;
-            self.b62_val_array[index - 1] = base62_char(remainder as u8)?;
+            self.b62_val_array.borrow_mut()[index - 1] = base62_char(remainder as u8)?;
             index -= 1;
         }
         // I have tested the line below, removing it won't speed up the function call
-        std::str::from_utf8(&self.b62_val_array).ok().map(|str| str.to_owned())
+        std::str::from_utf8(self.b62_val_array.borrow().deref()).ok().map(|str| str.to_owned())
     }
 }
 
@@ -94,7 +99,7 @@ mod tests {
 
     #[test]
     fn rust_get_integer_works() {
-        let mut rb62 = RB62::new();
+        let rb62 = RB62::new();
         for test in TEST_DATA {
             let i = rb62.get_integer(test.0).expect("get_integer can parse test data");
             let hex = format! {"{:032x}", i};
@@ -106,7 +111,7 @@ mod tests {
 
     #[test]
     fn rust_get_b62_works() {
-        let mut rb62 = RB62::new();
+        let rb62 = RB62::new();
         for test in TEST_DATA {
             let b62 = rb62.get_b62(test.1).expect("get_b62 can parse test data");
             assert_eq!(b62, test.0,
@@ -117,7 +122,7 @@ mod tests {
 
     #[test]
     fn rust_get_integer_should_return_none_when_input_invalid() {
-        let mut rb62 = RB62::new();
+        let rb62 = RB62::new();
         let invalid_inputs = vec![
             "000000000000000000000+",  // Invalid characters (+)
             "000000000000000000001",   // String is too short (should be at least 22 characters long)
@@ -133,7 +138,7 @@ mod tests {
 
     #[test]
     fn rust_get_b62_should_return_none_when_input_invalid() {
-        let mut rb62 = RB62::new();
+        let rb62 = RB62::new();
         let invalid_inputs = vec![
             "0000000000000000000000000000000+",
             "g0000000000000000000000000000001",

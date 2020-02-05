@@ -24,7 +24,7 @@ Then you can using it like this (or clone the repo and do `cargo run --example d
 use rb62::RB62;
 
 fn main() {
-    let mut rb62 = RB62::new();
+    let rb62 = RB62::new();
 
     let b62 = "6GGODyP2LIdbxIfYxy5UbN";
     let hex_as_u128 = rb62.get_integer(b62).unwrap();

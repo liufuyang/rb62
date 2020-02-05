@@ -57,7 +57,7 @@ fn bench_cpp_b62_to_hex(b: &mut Bencher) {
 
 #[bench]
 fn bench_rust_hex_to_b62(b: &mut Bencher) {
-    let mut rb62 = RB62::new();
+    let rb62 = RB62::new();
     b.iter(|| {
         for test in TEST_DATA {
             let b62 = rb62.get_b62(test.1).expect("get_b62 can parse test data");
@@ -70,7 +70,7 @@ fn bench_rust_hex_to_b62(b: &mut Bencher) {
 
 #[bench]
 fn bench_rust_b62_to_hex(b: &mut Bencher) {
-    let mut rb62 = RB62::new();
+    let rb62 = RB62::new();
     b.iter(|| {
         for test in TEST_DATA {
             let i = rb62.get_integer(test.0).expect("get_integer can parse test data");
