@@ -11,6 +11,8 @@ lazy_static! {
         }
         max_val_array
     };
+
+    static ref HEX: &'static [u8; 16] = b"0123456789abcdef";
 }
 
 pub fn get_integer(base62: &str) -> Option<u128> {
@@ -40,6 +42,20 @@ pub fn get_integer(base62: &str) -> Option<u128> {
         bi += *v as u128;
     }
     Some(bi)
+}
+
+/// Turn b62 String to Hex String representation
+pub fn get_hex(base62: &str) -> Option<[u8; 32]> {
+    let mut hex_val_array: [u8; 32] = [0; 32];
+    let hex_u128 = get_integer(base62)?;
+    let hex_byte = hex_u128.to_be_bytes();
+    for i in 0..16 {
+        let h1 : u8 = ((hex_byte[i]>>4) & 0x0f) as u8;
+        let h2 : u8 = (hex_byte[i] & 0x0f) as u8;
+        hex_val_array[i*2] = HEX[h1 as usize];
+        hex_val_array[i*2+1] = HEX[h2 as usize];
+    }
+    Some(hex_val_array)
 }
 
 pub fn get_b62(hex: &str) -> Option<[u8; 22]> {

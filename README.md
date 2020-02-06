@@ -38,12 +38,15 @@ Input hex dbc3d5ebe344484da3e2448712a02213, output b62 6GGODyP2LIdbxIfYxy5UbN
 
 `cargo bench --tests --features bench_cpp`
 ```
-test bench_cpp_b62_to_hex                   ... bench:     296,346 ns/iter (+/- 34,520)
-test bench_cpp_hex_to_b62                   ... bench:     310,960 ns/iter (+/- 22,825)
-test bench_rust_b62_to_hex                  ... bench:     218,408 ns/iter (+/- 51,229)
-test bench_rust_hex_to_b62                  ... bench:     112,212 ns/iter (+/- 9,260)
-test bench_single_operation_cpp_b62_to_hex  ... bench:         436 ns/iter (+/- 31)
-test bench_single_operation_cpp_hex_to_b62  ... bench:         506 ns/iter (+/- 134)
-test bench_single_operation_rust_b62_to_hex ... bench:         155 ns/iter (+/- 25)
-test bench_single_operation_rust_hex_to_b62 ... bench:         196 ns/iter (+/- 59)
+test bench_cpp_b62_to_hex                                    ... bench:     296,346 ns/iter (+/- 34,520)
+test bench_cpp_hex_to_b62                                    ... bench:     310,960 ns/iter (+/- 22,825)
+test bench_rust_b62_to_hex                                   ... bench:     218,408 ns/iter (+/- 51,229)
+test bench_rust_b62_to_hex_not_using_format                  ... bench:      73,004 ns/iter (+/- 14,131)
+test bench_rust_hex_to_b62                                   ... bench:     112,212 ns/iter (+/- 9,260)
+
+test bench_single_operation_cpp_b62_to_hex                   ... bench:         436 ns/iter (+/- 31)
+test bench_single_operation_cpp_hex_to_b62                   ... bench:         506 ns/iter (+/- 134)
+test bench_single_operation_rust_b62_to_hex                  ... bench:         155 ns/iter (+/- 25)
+test bench_single_operation_rust_b62_to_hex_not_using_format ... bench:          81 ns/iter (+/- 10)
+test bench_single_operation_rust_hex_to_b62                  ... bench:         196 ns/iter (+/- 59)
 ```

@@ -21,7 +21,7 @@ extern "C" {
 }
 
 use test::Bencher;
-use rb62::{get_integer, get_b62};
+use rb62::{get_integer, get_b62, get_hex};
 
 #[cfg(feature = "bench_cpp")]
 use std::ffi::{CStr, CString};
@@ -89,6 +89,19 @@ fn bench_rust_b62_to_hex(b: &mut Bencher) {
     });
 }
 
+#[bench]
+fn bench_rust_b62_to_hex_not_using_format(b: &mut Bencher) {
+    b.iter(|| {
+        for test in TEST_DATA {
+            let i = get_hex(test.0).expect("get_integer can parse test data");
+            let hex = std::str::from_utf8(&i).unwrap();
+            assert_eq!(hex, test.1,
+                       "we are testing b62 {} to hex {}, but got hex {}", test.0, test.1, hex
+            );
+        }
+    });
+}
+
 #[cfg(feature = "bench_cpp")]
 #[bench]
 fn bench_single_operation_cpp_hex_to_b62(b: &mut Bencher) {
@@ -133,6 +146,17 @@ fn bench_single_operation_rust_b62_to_hex(b: &mut Bencher) {
     b.iter(|| {
         let i = get_integer("6GGODyP2LIdbxIfYxy5UbN").expect("get_integer can parse test data");
         let hex = format! {"{:032x}", i};
+        assert_eq!(hex, "dbc3d5ebe344484da3e2448712a02213",
+                   "we are testing b62 {} to hex {}, but got hex {}", "6GGODyP2LIdbxIfYxy5UbN", "dbc3d5ebe344484da3e2448712a02213", hex
+        );
+    });
+}
+
+#[bench]
+fn bench_single_operation_rust_b62_to_hex_not_using_format(b: &mut Bencher) {
+    b.iter(|| {
+        let i = get_hex("6GGODyP2LIdbxIfYxy5UbN").expect("get_integer can parse test data");
+        let hex = std::str::from_utf8(&i).unwrap();
         assert_eq!(hex, "dbc3d5ebe344484da3e2448712a02213",
                    "we are testing b62 {} to hex {}, but got hex {}", "6GGODyP2LIdbxIfYxy5UbN", "dbc3d5ebe344484da3e2448712a02213", hex
         );
